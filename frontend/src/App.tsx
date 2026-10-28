@@ -65,9 +65,9 @@ function Workspace() {
         const input=document.querySelector<HTMLInputElement>('[aria-label="搜索当前页"],[aria-label="搜索告警或阶段"]');
         if(input){event.preventDefault();input.focus();}
       }
-      if(!typing&&!route.incidentId&&(event.key==='j'||event.key==='k')){
-        const rows=[...document.querySelectorAll<HTMLElement>('#incident-list tbody tr')];
-        if(rows.length){event.preventDefault();const index=rows.indexOf(document.activeElement as HTMLElement);rows[Math.max(0,Math.min(rows.length-1,index+(event.key==='j'?1:-1)))]?.focus();}
+      if(!typing&&!route.incidentId&&!document.querySelector('[role="dialog"],dialog[open]')&&(event.key==='j'||event.key==='k')){
+        const rows=[...document.querySelectorAll<HTMLElement>('#incident-list tbody tr, #incident-list .mobile-row')];
+        if(rows.length){event.preventDefault();const index=rows.indexOf(document.activeElement as HTMLElement);rows[Math.max(0,Math.min(rows.length-1,index<0?0:index+(event.key==='j'?1:-1)))]?.focus();}
       }
     };
     document.addEventListener('keydown',keyboard);return()=>document.removeEventListener('keydown',keyboard);

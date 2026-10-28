@@ -1,0 +1,64 @@
+@layer components {
+.welcome { max-width: 1120px; padding: 16px 0 8px; }
+
+@media (min-width: 901px) {
+  .welcome {
+    min-height: calc(100vh - var(--tb-topbar) - 8px - 56px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 0;
+  }
+}
+.welcome h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 10px; max-width: 22ch; }
+.welcome-lede { margin: 0; font-size: 14px; line-height: 1.7; color: var(--tb-ink-2); max-width: 62ch; }
+
+.welcome-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  margin-top: 30px;
+  border-top: 1px solid var(--tb-border);
+}
+
+.welcome-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--tb-border);
+}
+.welcome-facts h3 { font-size: 13px; font-weight: 600; margin: 0 0 6px; }
+.welcome-facts p { font-size: 13px; line-height: 1.65; color: var(--tb-ink-3); margin: 0; max-width: 32ch; }
+
+.recent-analyses { margin: 0; padding: 18px 36px 0 0; border: 0; }
+.recent-analyses h2 { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+.recent-analyses ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.recent-analyses li + li { border-top: 1px solid var(--tb-rule); }
+.recent-analyses li button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--tb-ink);
+  font-size: 12px;
+}
+.recent-analyses li button:hover { background: var(--tb-hover); }
+.recent-analyses li button span { color: var(--tb-ink-3); font-size: 12px; white-space: nowrap; }
+.recent-analyses .muted { font-size: 13px; color: var(--tb-ink-3); }
+
+.welcome-aside { padding: 18px 0 0 36px; border-left: 1px solid var(--tb-border); }
+.welcome-aside h2 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+.welcome-aside h2 + .facts { margin-bottom: 22px; }
+.welcome-aside .fact { grid-template-columns: 76px minmax(0, 1fr); padding: 6px 0; }
+.welcome-aside .fact dt { font-size: 12px; }
+.welcome-aside .fact dd { font-size: 13px; line-height: 1.6; }
+.welcome-aside > p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--tb-ink-3); max-width: 52ch; }
+.welcome-aside code { font-size: 12px; color: var(--tb-ink-2); background: var(--tb-raised); padding: 1px 5px; border-radius: 3px; }
+
+}

@@ -7,8 +7,8 @@
 .soc-app .overview-heading h1 { font-size:23px; letter-spacing:0; color:var(--ink); margin:0 0 5px; }
 .soc-app .overview-heading p { font-size:12px; color:var(--muted); margin:0; }
 .soc-app .badge { font-size:11px; padding:4px 8px; margin:0; }
-.soc-app button,.soc-app input,.soc-app select { border-color:#dce6f3; border-radius:5px; }
-.soc-app button:hover { background:#f1f7ff; border-color:#b9d6ff; }
+.soc-app button:not([data-slot]),.soc-app input,.soc-app select { border-color:#dce6f3; border-radius:5px; }
+.soc-app button:not([data-slot]):hover { background:#f1f7ff; border-color:#b9d6ff; }
 .soc-app button.primary { color:white; border-color:var(--blue); background:var(--blue); }
 .soc-app button.text-button { background:none; color:#1677ff; padding:3px 0; font-size:12px; border:0; }
 .scope-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
@@ -63,9 +63,9 @@
 .soc-app .source-row:nth-child(6) i { background:#f8ad64; }
 .soc-app .source-count { font-size:12px; }
 .soc-app .source-total { margin:0; font-size:10px; }
-.soc-app table { font-size:12px; }
-.soc-app th { background:#f3f7fc; color:#667b9b; font-size:11px; padding:10px 12px; letter-spacing:0; }
-.soc-app td { padding:11px 12px; vertical-align:middle; border-bottom:1px solid #edf2f8; overflow-wrap:anywhere; }
+.soc-app table:not(.list-table):not(.data-table) { font-size:12px; }
+.soc-app table:not(.list-table):not(.data-table) th { background:#f3f7fc; color:#667b9b; font-size:11px; padding:10px 12px; letter-spacing:0; }
+.soc-app table:not(.list-table):not(.data-table) td { padding:11px 12px; vertical-align:middle; border-bottom:1px solid #edf2f8; overflow-wrap:anywhere; }
 .soc-app .recent-chains-table { font-size:11px; }
 .soc-app .recent-chains-table th,.soc-app .recent-chains-table td { padding:8px 10px; }
 .soc-app .recent-chains-table .chain-id { display:none; }
