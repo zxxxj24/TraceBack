@@ -16,12 +16,17 @@ from evaluation.io.snapshot import load_snapshot
 
 
 @pytest.fixture
-def production_snapshot(tmp_path):
+def production_snapshot(tmp_path, monkeypatch):
+    # These fixtures verify the complete member population, never samples.
+    monkeypatch.setenv('TRACEBACK_DIAGNOSTICS_MODE', 'full')
     svc = service(tmp_path)
     rows = [synthetic_record(id=f"synthetic-{i}", timestamp=f"2022-01-21T00:00:{i:02d}Z",
                             data={"host": "synthetic-host", "user": f"synthetic-user-{i%2}"}) for i in range(8)]
     path = write_input(tmp_path, rows)
-    aid = svc.create(request_for(path), background=False)
+    try:
+        aid = svc.create(request_for(path), background=False)
+    finally:
+        svc.close()
     return load_snapshot(tmp_path, aid)
 
 

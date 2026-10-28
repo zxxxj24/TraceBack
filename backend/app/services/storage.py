@@ -107,10 +107,14 @@ class SnapshotStore:
     def diagnostics_writer(self, *, bounded=False):
         self.create()
         path = self.details / "diagnostics.jsonl"
+        import os
+        mode = os.environ.get('TRACEBACK_DIAGNOSTICS_MODE', 'compact')
+        if mode not in {'compact', 'full'}:
+            raise ValueError('invalid_diagnostics_mode')
         with path.open("w", encoding="utf-8", newline="\n") as handle:
-            if bounded:
-                from .bounded_diagnostics import BoundedDiagnostics
-                sink = BoundedDiagnostics(self.details, handle)
+            if mode == 'compact':
+                from .bounded_diagnostics import BoundedDiagnostics, CompactDiagnostics
+                sink = (BoundedDiagnostics if bounded else CompactDiagnostics)(self.details, handle)
                 try:
                     yield sink
                 finally:
@@ -119,8 +123,21 @@ class SnapshotStore:
             # Diagnostics preserve unrounded floats and have no domain identity.
             # Stable sorted-key JSON avoids repeatedly applying Stable-ID decimal
             # normalization to millions of already normalized fact references.
-            yield lambda record: handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True,
-                                                        separators=(",", ":"), allow_nan=False) + "\n")
+            limit = int(os.environ.get('TRACEBACK_DIAGNOSTICS_FULL_MIB', '200')) * 1024 * 1024
+            if limit < 1:
+                raise ValueError('invalid_full_diagnostics_budget')
+            written = 0
+            def full_writer(record):
+                nonlocal written
+                line = json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + '\n'
+                size = len(line.encode('utf8'))
+                if written + size > limit:
+                    # A debugging run must fail explicitly rather than publish
+                    # an apparently complete full diagnostic stream.
+                    raise ValueError('full_diagnostics_budget_exceeded')
+                handle.write(line)
+                written += size
+            yield full_writer
 
     def write_records(self, kind, records):
         if kind not in MODELS:
@@ -237,7 +254,7 @@ class SnapshotStore:
         if execution is not None:
             manifest["execution"] = execution
         if (self.details/'bounded_diagnostics.json').exists():
-            manifest['diagnostic_storage_version'] = 'bounded-diagnostics-v1'
+            manifest['diagnostic_storage_version'] = json.loads((self.details/'bounded_diagnostics.json').read_text(encoding='utf8'))['version']
             manifest['diagnostic_files'] = {p.relative_to(self.details).as_posix():file_digest(p)
                 for p in sorted(self.details.rglob('*')) if p.is_file() and
                 (p.suffix == '.parquet' or p.name == 'bounded_diagnostics.json')}

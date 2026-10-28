@@ -26,6 +26,8 @@ def connect_database(destination):
 
 
 def extract_scores(snapshot, destination, progress=lambda _: None):
+    if snapshot.manifest.get('diagnostic_storage_version'):
+        raise ValueError('full_diagnostics_required: rerun with TRACEBACK_DIAGNOSTICS_MODE=full; compact samples are not the full member population')
     destination = Path(destination)
     input_path = snapshot.store.details / "diagnostics.jsonl"
     cache_path = destination / "score_snapshot.json"

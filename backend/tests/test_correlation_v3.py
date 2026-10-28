@@ -416,13 +416,19 @@ def test_multiple_independent_facts_have_disjoint_consumed_entities(v3):
 
 def test_historical_v3_config_and_edge_serialization_unchanged(v3):
     import json
-    receipt=json.loads((ROOT/'outputs/correlation_v3/REAL_DATA_RESULT.json').read_text())
-    record=json.loads((ROOT/'data/processed'/receipt['analysis_id']/'analysis.json').read_text(encoding='utf-8'))
+    receipt_path=ROOT/'outputs/correlation_v3/REAL_DATA_RESULT.json'
+    if not receipt_path.is_file():
+        pytest.skip('optional historical v3 receipt is not installed')
+    receipt=json.loads(receipt_path.read_text())
+    domain=ROOT/'data/processed'/receipt['analysis_id']
+    if not domain.exists():
+        pytest.skip('optional historical v3 snapshot is not installed or was explicitly cleaned')
+    record=json.loads((domain/'analysis.json').read_text(encoding='utf-8'))
     cfg=restore_config(record['config_snapshot']['algorithm'])
     assert not cfg.algorithm.duplicate.observation.event_pointers
     from app.utils.stable_id import content_digest
     assert content_digest({'algorithm':cfg.snapshot,'sources':record['config_snapshot']['sources']})==record['config_hash']
-    for line in (ROOT/'data/processed'/receipt['analysis_id']/'correlation_edges.jsonl').read_text(encoding='utf-8').splitlines():
+    for line in (domain/'correlation_edges.jsonl').read_text(encoding='utf-8').splitlines():
         assert CorrelationEdge.model_validate_json(line).canonical_json()==line
 
 

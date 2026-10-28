@@ -34,6 +34,7 @@ class APIError(Transport):
 
 
 class AnalysisDetail(Transport):
+    pipeline_role: Literal['LEGACY_HISTORICAL_REPLAY_NOT_OFFICIAL_ANALYSIS_PIPELINE'] | None = None
     analysis_id: AnalysisID
     status: AnalysisStatus
     is_complete: bool

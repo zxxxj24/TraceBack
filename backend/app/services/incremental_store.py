@@ -156,6 +156,18 @@ class IncrementalStore:
                 'generation_id':generation['generation_id'], 'digest':content_digest(generation['record'])})
             return identity
         # Safe to retry only this unpublished generation-specific staging area.
+        # Compact diagnostics contain part directories, unlike the old single
+        # JSONL. Discard only the uncommitted export's diagnostic area on retry.
+        if store.details.exists():
+            import shutil
+            intended = self.path.parent.resolve()/'publication'
+            target = store.details.resolve()
+            if not target.is_relative_to(intended) or target == intended:
+                raise ValueError('unsafe_incremental_staging_path')
+            for item in (store.details, *store.details.parents, *store.details.rglob('*')):
+                if item.is_symlink() or (item.exists() and getattr(item.lstat(), 'st_file_attributes', 0) & 0x400):
+                    raise ValueError('linked_incremental_staging_path')
+            shutil.rmtree(store.details)
         mapping = {'alerts':'canonical_identity', 'entities':'domain_entities',
             'dedupe_groups':'dedupe_groups', 'correlation_edges':'formal_edges',
             'incidents':'domain_incidents', 'attack_chains':'domain_chains'}
