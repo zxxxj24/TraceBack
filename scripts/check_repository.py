@@ -44,10 +44,15 @@ BANNED_DIRECTORIES = {
     "kafka", "flink", "spark", "elasticsearch", "neo4j", "kubernetes", "gnn",
 }
 ALLOWED_RUNTIME = {"pydantic", "pyyaml", "annotated-types", "typing-extensions", "typing-inspection", "duckdb", "fastapi", "uvicorn", "httpx"}
-ALLOWED_TEST = {"pytest", "iniconfig", "packaging", "pluggy", "pygments", "colorama", "httpx"}
+ALLOWED_TEST = {"pytest", "iniconfig", "packaging", "pluggy", "pygments", "colorama", "httpx", "jsonschema"}
 
 # Preserve existing foundations; allow only the exact authorized Task 03 files.
 ALLOWED_APP_FILES = {
+    # Exact user-authorized Stage 1–4 orchestration and shared truth contract.
+    'backend/app/services/alert_pipeline.py', 'backend/app/adapters/truth.py',
+    # Exact user-authorized CanonicalAlert -> noise filter -> kept alerts.
+    "backend/app/noise_filter/__init__.py", "backend/app/noise_filter/config.py",
+    "backend/app/noise_filter/filter.py", "backend/app/noise_filter/models.py",
     # User-authorized front-data handoff; no downstream algorithm changes.
     "backend/app/services/front_data.py",
     # Exact user-authorized V5 formula and final evidence-semantics repair.
