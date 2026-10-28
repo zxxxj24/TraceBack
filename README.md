@@ -31,7 +31,7 @@ npm.cmd --prefix frontend run build
 
 `test` 安装项包含离线攻击步骤原型测试所需的 `jsonschema`，运行测试无需额外设置 `TRACEBACK_SCHEMA_VALIDATOR_PATH`。只使用离线原型时，可安装 `./backend[prototype]`；工作台核心运行依赖不包含该可选校验器。
 
-看到 `Uvicorn running on http://127.0.0.1:8000` 后，打开[工作台](http://127.0.0.1:8000)。首页为态势总览，自动读取最新正式分析，无需填写 Analysis ID。当前正式快照为 **125 条告警、15 个阶段、12 条关系、7 条链结构**；通过顶部导航进入告警、场景、攻击链和证据页面。历史 **47 阶段 / 255 关系 / 4 事件**快照仍按原分析 ID 保留。工作台展示已有分析结果；启动服务不会重新运行算法。
+看到 `Uvicorn running on http://127.0.0.1:8000` 后，打开[工作台](http://127.0.0.1:8000)。首页为态势总览，自动读取最新正式分析，无需填写 Analysis ID。当前正式快照为 **125 条告警、15 个阶段、12 条关系、7 条链结构**；通过侧边导航进入告警、场景、攻击链和证据页面。历史 **47 阶段 / 255 关系 / 4 事件**快照仍按原分析 ID 保留。工作台展示已有分析结果；启动服务不会重新运行算法。
 
 保持终端运行，按 `Ctrl+C` 停止。这个入口只启动服务，不重新运行告警分析。
 
@@ -46,7 +46,7 @@ cd D:\Code_WorkSpace\TraceBack
 .\.venv\Scripts\python.exe -m uvicorn app.api.workbench:create_workbench_app --factory --host 127.0.0.1 --port 8000
 ```
 
-看到 `Uvicorn running` 后，打开[工作台](http://127.0.0.1:8000)，自动进入最新正式分析的态势总览。旧版结果仍可通过原有 `?analysis_id=...` 地址查看；点击顶部 TraceBack 标志返回最新总览。保持终端运行，按 `Ctrl+C` 停止。
+看到 `Uvicorn running` 后，打开[工作台](http://127.0.0.1:8000)，自动进入最新正式分析的态势总览。旧版结果仍可通过原有 `?analysis_id=...` 地址查看；点击侧栏 TraceBack 标志返回最新总览。保持终端运行，按 `Ctrl+C` 停止。
 
 工作台直接读取已有快照，不经过 `scripts/demo.py` 的 AIT-ADS 数据检查。旧版 Demo 的重新分析、场景切换及其数据前提见[启动指南](docs/STARTUP.md#旧版-ait-ads-demo需要原始数据)。
 
@@ -78,7 +78,7 @@ npm.cmd --prefix frontend run dev
 
 打开 Vite 打印的 `Local:` 地址，首页自动进入态势总览。历史分析使用带 `?analysis_id=...` 的地址。此模式修改 UI 后会自动刷新；关闭服务时在两个终端分别按 `Ctrl+C`。
 
-工作台采用顶部模块导航：**态势总览 / 安全告警 / 攻击场景 / 攻击链 / 证据追溯 / 分析记录**。总览仅展示指标、分布和 4 条链摘要；告警与证据列表每页 10 条，攻击链页通过“攻击流程 / 阶段列表 / 关系列表 / 拒绝建边”切换内容。选择的分析、链和视图可通过 URL 刷新恢复；手机总览可按需展开关系与来源分布。
+工作台采用侧边模块导航（手机通过顶部菜单按钮展开）：**态势总览 / 安全告警 / 攻击场景 / 攻击链 / 证据追溯 / 分析记录**。总览仅展示指标、分布和 4 条链摘要；告警与证据列表每页 10 条，攻击链页通过“攻击流程 / 阶段列表 / 关系列表 / 拒绝建边”切换内容。选择的分析、链和视图可通过 URL 刷新恢复；手机总览可按需展开关系与来源分布。
 
 首页展示最新正式快照的真实统计；参考设计中的风险评分、处置状态与 ATT&CK 分布，需要对应数据支持后再接入。
 
@@ -155,3 +155,36 @@ TraceBack/
 - [验证命令](docs/STARTUP.md#验证命令)：后端测试、前端检查和浏览器验收。
 - [结果与能力边界](docs/STARTUP.md#数据结果和边界)：历史结果、AI 配置与评测限制。
 - [数据契约](docs/DATA_CONTRACT.md)、[算法配置](docs/ALGORITHM_CONFIG.md)。
+
+## 第三方 UI 组件
+
+本项目 UI 优化使用以下第三方组件与工具，完整许可证与来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)：
+
+- [coss.com/ui](https://github.com/cosscom/ui)（Cal.com Design System，registry 路径，MIT）
+- [Rare UI](https://rareui.com)（`ai-status` 组件，MIT + Commons Clause + Attribution）
+- [Lucide](https://lucide.dev) / [morphicons](https://morphicons.com) / [Tailwind CSS](https://tailwindcss.com) / [Base UI](https://base-ui.com)
+
+Rare UI 组件使用需保留其版权与许可声明；Rare UI 名称、logo 与站点设计不在组件许可证范围内。
+
+## UI 开发与验收
+
+设计规范见 [docs/DESIGN.md](docs/DESIGN.md)，产品/信息架构见 [docs/PRODUCT.md](docs/PRODUCT.md)。
+
+```bash
+cd frontend
+npm run typecheck        # TypeScript
+npm run test:run         # Vitest（当前 82 tests）
+npm run test:e2e:list    # Playwright 收集检查（无需后端）
+npm run test:e2e         # 自包含 Playwright（route 拦截 fixture，端口 4174）
+npm run test:e2e:visual  # 视觉截图 → ../outputs/ui_visual/（可用环境变量覆盖）
+npm run verify           # typecheck + Vitest + build + bundle budget
+npm run detect:ui        # 可选：需另行安装本地 Impeccable detector
+npm run detect:ui:check  # 可选：需 detector 及其审阅基线
+```
+
+- 项目级设计技能（本地可选，未纳入版本库）：`TraceBack/.dsh/skills/`（Impeccable 4.8.0 + emilkowalski 13 个技能）。
+- 可访问性：`docs/A11Y-MANUAL-CHECKLIST.md`；OpenAPI 快照：`docs/openapi-workbench.json`（`PYTHONPATH=backend python scripts/export_openapi.py --check`）。
+- 视觉/设计系统说明与动效规范：`docs/DESIGN.md`；产品说明：`docs/PRODUCT.md`；最终交付报告：`docs/UI-OPTIMIZATION-REPORT.md`；审计证据：`docs/UI-AUDIT.md`；第三方文件级来源：`THIRD_PARTY_NOTICES.md`。
+- 深链示例：`?analysis_id=<id>&incident_id=<id>&node_id=<nod_id>&timeline_page=2&evidence=<alt_id>`；`/` 聚焦搜索、`Esc` 关闭证据、`j/k` 列表行导航。
+
+真实 Stage 验收：先启动本机后端，再在 `frontend/` 运行 `npx playwright test --config playwright.home.config.ts`，默认连接 `http://127.0.0.1:8765`，可用 `TRACEBACK_WEB_URL` 覆盖。此套件不拦截 API，会执行真实上传、契约校验及正式 CLI。默认 `test:e2e` 使用独立的合成 fixture，仅验证旧版事件 UI，不代表真实分析验收。
