@@ -1,13 +1,7 @@
-/*
- * TraceBack design foundation — v2 "framed sheet".
- * Direction: taste-skill `framed-sheet` (light, kind=support, seed 1901974840),
- * disciplined by Impeccable Operate mode and the TraceBack brand (navy ink +
- * one teal data hue). Chrome is a pale blue-grey L-frame; the work lives on a
- * white sheet with a hairline edge and no shadow. Colour is data, status and
- * the one primary action — never chrome decoration.
- *
- * Layer order matters: base < components < utilities. Component styles live in
- * src/styles/app.css inside @layer components; Tailwind utilities always win.
+/* TraceBack light security workspace: blue primary actions, navy text,
+ * white surfaces and a pale blue canvas. Overview-specific styles are lazy
+ * loaded with the page; shared tokens also serve the evidence components.
+ * Layer order: base < components < utilities.
  */
 @layer theme, base, components, utilities;
 @import "tailwindcss" source(none);
@@ -32,31 +26,31 @@
   --tb-teal-700: var(--tb-accent);
 
   /* Surfaces ------------------------------------------------------------- */
-  --tb-frame: #edf1f3;          /* chrome: sidebar + top bar, one ground */
-  --tb-sheet: #ffffff;          /* the work surface, inset 8px right/bottom */
+  --tb-frame: #f2f7ff;          /* pale blue application canvas */
+  --tb-sheet: #ffffff;          /* card and evidence surface */
   --tb-sheet-edge: #e7ecef;
   --tb-raised: #f6f8f9;         /* quiet wells inside the sheet */
-  --tb-active: #e4eaed;         /* nav / selected row fill, never the accent */
-  --tb-hover: #f1f4f6;
+  --tb-active: #eaf1ff;         /* pale blue selected navigation */
+  --tb-hover: #f4f7ff;
   --tb-border: #e6ebee;         /* card + panel edges, ~1.2:1 on white */
   --tb-rule: #f0f3f5;           /* row rules, one step lighter */
   --tb-control: #cfd9df;        /* control borders, one step stronger */
 
   /* Ink ------------------------------------------------------------------ */
-  --tb-ink: #1b2a34;            /* primary text; 13:1 on white */
-  --tb-ink-2: #526874;          /* secondary text; 5.6:1 on white, 4.9:1 on frame */
-  --tb-ink-3: #5f7480;          /* muted / placeholder; 4.9:1 on white */
+  --tb-ink: #142447;            /* primary text; 13:1 on white */
+  --tb-ink-2: #526583;          /* secondary text; 5.6:1 on white, 4.9:1 on frame */
+  --tb-ink-3: #5f6f89;          /* muted / placeholder; 4.9:1 on white */
   --tb-ink-inverse: #ffffff;
 
-  /* One data hue --------------------------------------------------------- */
-  --tb-accent: #16718f;         /* teal: data + the one selected state */
-  --tb-accent-strong: #0f5d78;
+  /* Primary data hue --------------------------------------------------------- */
+  --tb-accent: #255dd2;         /* primary links and selection */
+  --tb-accent-strong: #174cbd;
   --tb-accent-weak: #e7f1f4;
   --tb-accent-rule: #b9d5df;
 
   /* Actions and status --------------------------------------------------- */
-  --tb-primary: #1b2a34;        /* near-black fill, the only filled control */
-  --tb-primary-hover: #122029;
+  --tb-primary: #2463eb;        /* primary action blue */
+  --tb-primary-hover: #174cbd;
   --tb-success: #246b4b;
   --tb-success-bg: #e5f2ea;
   --tb-warning: #8a5a10;
@@ -68,7 +62,7 @@
   --tb-info: #1d6280;
   --tb-info-bg: #e6f1f6;
 
-  /* Radii: sheet 16, cards 10, controls 8, chips 4. Bimodal, no middle. */
+  /* Shared component radii; overview cards use 12px and panels 14px. */
   --tb-radius-sheet: 16px;
   --tb-radius-card: 10px;
   --tb-radius-control: 8px;
@@ -129,7 +123,7 @@
   --info: #1d6280;
   --info-foreground: #18546e;
 
-  /* Charts: one hue, neutrals for everything else. */
+  /* Shared evidence chart defaults; overview adds semantic data colors. */
   --chart-1: #16718f;
   --chart-2: #8fa7b1;
   --chart-3: #5f7480;
