@@ -32,7 +32,9 @@ test('phone timeline retains precise times and navigation scrolls clear', async 
   await page.screenshot({path:'../outputs/ui_visual/pr2-integrated-phone.png',fullPage:true});
 });
 
-test('formal modules keep navigation, analysis scope and import controls', async ({page}) => {
+for (const width of [1440,2048]) {
+test(`formal modules fill the workspace and keep light graph nodes at ${width}px`, async ({page}) => {
+  await page.setViewportSize({width,height:900});
   const aid='ana_'+'b'.repeat(64);
   const stage={stage_id:'stage_0',community_id:'scene',behavior:'EXECUTION',start_time:'2026-10-22T01:00:00Z',end_time:'2026-10-22T01:01:00Z',alert_ids:['alert_0'],alert_count:1,source_types:['edr'],evidence_summary:'observed'};
   const analysis={analysis_id:aid,algorithm_version:'attack-chain-reconstruction-v1',status:'sealed',source_stage:9,counts:{input_count:1,stage_count:1,relation_count:0,chain_count:1,directed_count:0,undirected_count:0},stages:[stage],chains:[{chain_id:'chain_0',stage_ids:['stage_0'],relation_ids:[],stage_count:1,relation_count:0,single_stage:true,has_directed_cycle:false,entry_stage_ids:[],exit_stage_ids:[]}],relations:[]};
@@ -50,8 +52,36 @@ test('formal modules keep navigation, analysis scope and import controls', async
   await nav.getByRole('link',{name:'安全告警',exact:true}).click();
   await expect(page.getByRole('heading',{name:'安全告警',exact:true})).toBeVisible();
   expect(new URL(page.url()).searchParams.get('analysis_id')).toBe(aid);
+  const expectFullTable=async()=>{
+    const frame=page.locator('.module-table-panel .table-scroll, .chain-table-view .table-scroll').first();
+    const table=frame.locator('table');
+    await expect(table).toBeVisible();
+    const available=(await frame.boundingBox())!.width;
+    expect((await table.boundingBox())!.width/available).toBeGreaterThan(.98);
+    await expect(table.locator('th').first()).toHaveCSS('text-align','left');
+  };
+  await expectFullTable();
+  await page.screenshot({path:`../outputs/ui_visual/full-width-alerts-${width}.png`,fullPage:true});
+  for(const label of ['攻击场景','证据追溯']) {
+    await nav.getByRole('link',{name:label,exact:true}).click();
+    await expect(page.getByRole('heading',{name:label,exact:true})).toBeVisible();
+    await expectFullTable();
+  }
   await nav.getByRole('link',{name:'攻击链',exact:true}).click();
   await expect(page.getByRole('heading',{name:'1 条告警分析',exact:true})).toBeVisible();
+  const node=page.locator('.event-flow-canvas .graph-node').first();
+  await expect(node).toBeVisible();
+  const lightness=await node.locator('rect').evaluate(rect=>{
+    const rgb=getComputedStyle(rect).fill.match(/\d+/g)!.map(Number);
+    return (rgb[0]+rgb[1]+rgb[2])/3;
+  });
+  expect(lightness).toBeGreaterThan(220);
+  await expect(node.locator('.node-category')).toHaveCSS('fill','rgb(27, 42, 52)');
+  await page.screenshot({path:`../outputs/ui_visual/light-chain-${width}.png`,fullPage:true});
+  for(const label of ['阶段列表','关系列表','拒绝建边']) {
+    await page.getByRole('button',{name:label,exact:true}).click();
+    await expectFullTable();
+  }
   await page.getByRole('button',{name:'导入告警',exact:true}).click();
   const drawer=page.getByRole('dialog',{name:'导入告警与分析'});
   await expect(drawer.getByLabel('选择告警文件')).toBeVisible();
@@ -65,3 +95,5 @@ test('formal modules keep navigation, analysis scope and import controls', async
   await expect(navigation).toHaveCount(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
 });
+
+}

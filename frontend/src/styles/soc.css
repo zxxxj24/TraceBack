@@ -63,8 +63,9 @@
 .soc-app .source-row:nth-child(6) i { background:#f8ad64; }
 .soc-app .source-count { font-size:12px; }
 .soc-app .source-total { margin:0; font-size:10px; }
-.soc-app table:not(.list-table):not(.data-table) { font-size:12px; }
-.soc-app table:not(.list-table):not(.data-table) th { background:#f3f7fc; color:#667b9b; font-size:11px; padding:10px 12px; letter-spacing:0; }
+.soc-app .table-scroll { overflow-x:auto; }
+.soc-app table:not(.list-table):not(.data-table) { width:100%; border-collapse:collapse; font-size:12px; }
+.soc-app table:not(.list-table):not(.data-table) th { text-align:left; background:#f3f7fc; color:#667b9b; font-size:11px; padding:10px 12px; letter-spacing:0; }
 .soc-app table:not(.list-table):not(.data-table) td { padding:11px 12px; vertical-align:middle; border-bottom:1px solid #edf2f8; overflow-wrap:anywhere; }
 .soc-app .recent-chains-table { font-size:11px; }
 .soc-app .recent-chains-table th,.soc-app .recent-chains-table td { padding:8px 10px; }
