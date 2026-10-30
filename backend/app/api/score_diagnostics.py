@@ -176,6 +176,8 @@ class ScoreAudit:
 
 
 def stream_diagnostics(path, config, progress=None, pair_sources=None):
+    if (Path(path).parent/'bounded_diagnostics.json').is_file():
+        raise ValueError('full_diagnostics_required: compact member samples cannot be used as a full score population')
     audit = ScoreAudit(config, pair_sources=pair_sources)
     with Path(path).open(encoding='utf-8') as f:
         for line in f:

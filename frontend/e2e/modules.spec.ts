@@ -53,10 +53,12 @@ test('modules retain snapshot scope, paginate, filter, open exact chains and sur
   await page.screenshot({path:'../outputs/ui_redesign/06-records.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   for(const label of ['态势总览','安全告警','攻击场景','攻击链','证据追溯','分析记录']) {
+    await page.getByRole('button',{name:'打开导航菜单',exact:true}).click();
     await nav.getByRole('link',{name:label,exact:true}).click();
     await expect(page.locator('main h1')).toBeVisible();
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBeTruthy();
   }
+  await page.getByRole('button',{name:'打开导航菜单',exact:true}).click();
   await nav.getByRole('link',{name:'态势总览'}).click();
   await expect(page.getByRole('heading',{name:'安全运营态势总览',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'关系决策分布'})).toBeHidden();

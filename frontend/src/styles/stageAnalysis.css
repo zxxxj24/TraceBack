@@ -16,9 +16,16 @@
 .event-flow-canvas { overflow: auto; height: 886px; border: 1px solid #dce7ed; border-top: 0; border-radius: 0 0 7px 7px; background: #f9fcfd; padding: 16px; }
 .event-flow-canvas svg { display: block; margin: auto; max-width: none; }
 .event-flow-canvas .flow-direction { font-size: 14px; fill: #637f8e; }
-.event-flow-canvas .graph-node .node-category { font-size: 16px; }
-.event-flow-canvas .graph-node text { font-size: 13px; }
-.event-flow-canvas .graph-node .flow-node-time { fill: #7d909e; font-size: 12px; }
+.event-flow-canvas .graph-node { cursor: pointer; }
+.event-flow-canvas .graph-node rect { fill: #fff; stroke: #c7d4da; stroke-width: 1.2; }
+.event-flow-canvas .graph-node:hover rect { fill: #f1f7fa; stroke: #16718f; }
+.event-flow-canvas .graph-node.selected rect { fill: #e7f1f4; stroke: #16718f; stroke-width: 2; }
+.event-flow-canvas .graph-node:focus-visible { outline: none; }
+.event-flow-canvas .graph-node:focus-visible rect { stroke: #16718f; stroke-width: 2.5; }
+.event-flow-canvas .graph-node .node-category { fill: #1b2a34; font-size: 16px; font-weight: 600; }
+.event-flow-canvas .graph-node text { fill: #526874; font-size: 13px; }
+.event-flow-canvas .graph-node .flow-node-time { fill: #526874; font-size: 12px; }
+.event-flow-canvas .edge-hit { stroke: transparent; stroke-width: 22; }
 .event-flow-canvas .graph-edge .edge-line { stroke-width: 2.2; stroke-linejoin: round; }
 .event-flow-canvas .graph-edge .edge-label { opacity: 0; font-size: 13px; pointer-events: none; }
 .event-flow-canvas .graph-edge:hover .edge-label,
@@ -32,6 +39,11 @@
   .event-flow-controls { gap: 6px; }
   .event-flow-controls>span:first-child { flex-basis: 100%; }
   .event-flow-canvas { height: 680px; }
+}
+@media (forced-colors: active) {
+  .event-flow-canvas .graph-node rect { fill: Canvas; stroke: CanvasText; }
+  .event-flow-canvas .graph-node:is(:hover,.selected,:focus-visible) rect { fill: Canvas; stroke: Highlight; }
+  .event-flow-canvas .graph-node text { fill: CanvasText; }
 }
 
 .stage-evidence-drawer {

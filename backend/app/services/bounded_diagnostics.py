@@ -3,6 +3,7 @@
 from collections import Counter
 from dataclasses import asdict
 import json
+import os
 from pathlib import Path
 import duckdb
 
@@ -10,6 +11,14 @@ import duckdb
 BATCH = 256
 FILE_LIMIT = 512 * 1024 * 1024
 JSON_LIMIT = 64 * 1024 * 1024
+
+
+def detail_budget():
+    """Auxiliary detail budget only; exact decisions/evidence are never sampled."""
+    value = int(os.environ.get('TRACEBACK_DIAGNOSTICS_DETAIL_MIB', '100'))
+    if value < 1:
+        raise ValueError('invalid_diagnostic_detail_budget')
+    return value * 1024 * 1024
 
 
 def dumps(value):
@@ -100,6 +109,7 @@ class DiskCandidates:
 
 class BoundedDiagnostics:
     """Exact counters plus deterministic first-in-order bounded rejection samples."""
+    storage_version = 'bounded-diagnostics-v1'
     def __init__(self, details, handle):
         self.details, self.handle = Path(details), handle
         self.decisions = ColumnarStream(self.details/'candidate_decisions',
@@ -114,6 +124,8 @@ class BoundedDiagnostics:
         self.overflow = None
         self.entity_values = {}
         self.json_bytes, self.sample_raw_bytes, self.sample_guard = 0, 0, False
+        self.detail_bytes = 0
+        self.detail_limit = detail_budget()
 
     def prepare_candidates(self, index, candidates):
         self.index = index
@@ -140,9 +152,11 @@ class BoundedDiagnostics:
             if self.overflow is None:
                 self.overflow = ColumnarStream(self.details/'essential_diagnostic_overflow','payload VARCHAR')
             self.overflow.add((data,))
-        elif essential or self.json_bytes + size <= JSON_LIMIT:
+        elif essential or (self.json_bytes + size <= JSON_LIMIT and self.detail_bytes + size <= self.detail_limit):
             self.handle.write(data)
             self.json_bytes += size
+            if not essential:
+                self.detail_bytes += size
         else:
             self.counts['general_records_aggregated_after_size_guard'] += 1
 
@@ -224,11 +238,12 @@ class BoundedDiagnostics:
                 if eligible and not self.sample_guard:
                     payload = dumps({'candidate':self.current,'member':chosen,'decision':row})
                     size = len(payload.encode('utf8'))
-                    if self.sample_raw_bytes + size > FILE_LIMIT:
+                    if self.sample_raw_bytes + size > FILE_LIMIT or self.detail_bytes + size > self.detail_limit:
                         self.sample_guard = True
                     else:
                         self.samples.add((dumps(eligible),payload))
                         self.sample_raw_bytes += size
+                        self.detail_bytes += size
                         self.sample_counts.update(eligible)
             self.current, self.best, self.valid_best = None, None, None
             return
@@ -245,7 +260,9 @@ class BoundedDiagnostics:
     def close(self):
         self.decisions.close()
         self.samples.close()
-        result = dict(version='bounded-diagnostics-v1', exact=True, batch_size=BATCH,
+        result = dict(version=self.storage_version, exact=True, batch_size=BATCH,
+            detail_budget_bytes=self.detail_limit, detail_bytes=self.detail_bytes,
+            detail_scope='optional JSON records and rejection samples; exact decisions, candidates and essential evidence excluded',
             counts=dict(self.counts), rejection_counts=self.rows(self.rejections,('rule_id','evidence_decision')),
             evidence_family_statistics=self.rows(self.family,('family','role')),
             candidate_evidence_family_statistics=self.rows(self.candidate_family,('family','role')),
@@ -270,3 +287,70 @@ class BoundedDiagnostics:
         self.write({'stage':'bounded_diagnostics_summary','summary':result},essential=True)
         if self.overflow is not None:
             self.overflow.close()
+
+
+class CompactDiagnostics(BoundedDiagnostics):
+    """Schema-independent observer for legacy scoring and incremental audits.
+
+    All candidate decisions are retained, including rejected pairs. Member detail
+    is bounded for rejections; accepted winning members remain complete.
+    """
+    storage_version = 'compact-diagnostics-v1'
+    def __call__(self, row):
+        stage = row.get('stage', 'unspecified')
+        self.counts[stage] += 1
+        if stage == 'candidate':
+            self.current, self.best, self.valid_best = row, None, None
+            return
+        if stage == 'member_score':
+            self.histogram[('member', self.bucket(row['score']))] += 1
+            self.guard_rejections.update(row.get('rejection_codes', ()))
+            pair = row['support_pair']
+            times = tuple(self.index.alerts[x].timestamp for x in pair) if self.index else ()
+            key = (-row['score'], *times, *pair)
+            if self.best is None or key < self.best[0]:
+                self.best = (key, row)
+            if row['valid'] and (self.valid_best is None or key < self.valid_best[0]):
+                self.valid_best = (key, row)
+            return
+        if stage == 'correlation_decision':
+            pair = row['support_key']
+            self.counts[row['decision']] += 1
+            self.histogram[('selected_valid_candidate', self.bucket(row['score']))] += 1
+            self.rejections[(row['rule_id'], row.get('evidence_decision', ''))] += int(row['decision'] == 'reject')
+            self.decisions.add((*pair, row['decision'], row['rule_id'], row.get('evidence_decision'), row['score'], row.get('edge_id')))
+            if self.index:
+                sources = ' ↔ '.join(sorted(self.index.alerts[x].source_namespace for x in pair))
+                self.sources[(sources, row['decision'])] += 1
+            selected = self.valid_best or self.best
+            if row['decision'] == 'accept':
+                # Keep the admission context and winning unrounded decomposition
+                # together, so accepted evidence is not subject to sample limits.
+                if self.current:
+                    self.write(self.current, essential=True)
+                if selected:
+                    self.write(selected[1], essential=True)
+                self.write(row, essential=True)
+            elif selected:
+                member = selected[1]
+                categories = ['reason:' + row['rule_id'], 'score:' + self.bucket(member['score'])]
+                if abs(member['score'] - row['threshold']) <= .05:
+                    categories.append('near_threshold')
+                eligible = [c for c in categories if self.sample_counts[c] < (2000 if c == 'near_threshold' else 500)]
+                if eligible:
+                    payload = dumps(dict(candidate=self.current, member=member, decision=row))
+                    size = len(payload.encode('utf8'))
+                    if self.detail_bytes + size <= self.detail_limit:
+                        self.samples.add((dumps(eligible), payload))
+                        self.sample_raw_bytes += size
+                        self.detail_bytes += size
+                        self.sample_counts.update(eligible)
+                    else:
+                        self.sample_guard = True
+            self.current, self.best, self.valid_best = None, None, None
+            return
+        if stage == 'targets':
+            return  # Exact target facts are in canonical alerts/entities.
+        # Incremental provenance and publication anchors are required history.
+        essential = stage.startswith('incremental_') or stage in {'analysis_publication', 'candidate_diagnosis', 'resource'}
+        self.write(row, essential=essential)

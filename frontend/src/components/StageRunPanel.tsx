@@ -43,7 +43,7 @@ function RunDetails({run,onResult}:{run:StageRun;onResult:()=>void}){
 
 // This controller stays mounted when the drawer closes. Validation and polling
 // have one owner across the workspace, including the records page.
-export default function StageRunPanel({catalog,selectedId,view,onSelect,onRuns}:{catalog:StageCatalog|null;selectedId:string;view:string;onSelect:(id:string)=>void;onRuns:(runs:StageRun[])=>void}){
+export default function StageRunPanel({catalog,selectedId,view,onSelect,onRuns,children}:{catalog:StageCatalog|null;selectedId:string;view:string;onSelect:(id:string)=>void;onRuns:(runs:StageRun[])=>void;children?:(batchControl:ReactNode)=>ReactNode}){
   const [upload,setUpload]=useState<StageUpload|null>(null),[runs,setRuns]=useState<StageRun[]>([]);
   const [busy,setBusy]=useState(''),[error,setError]=useState(''),[historyError,setHistoryError]=useState('');
   const [open,setOpen]=useState(false),[trackedId,setTrackedId]=useState(()=>remembered(trackedKey));
@@ -90,7 +90,8 @@ export default function StageRunPanel({catalog,selectedId,view,onSelect,onRuns}:
     finally{if(mounted.current)setBusy('');}
   }
   const openResult=(id:string)=>{callbacks.current.onSelect(id);setOpen(false);};
-  return <section className="run-controls" aria-label="分析批次与操作">
+  const batchControl=<div className="run-batch-toolbar"><label htmlFor="analysis-batch">当前分析批次</label><Icon name="layers"/><select id="analysis-batch" aria-label="历史分析" title={selectedLabel??selectedId} value={selectedId} onChange={e=>select(e.target.value)}><option value="" disabled>选择分析批次</option>{selectedId&&!selectedLabel&&<option value={selectedId}>{selectedId.slice(0,20)} · 正在识别</option>}{choices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select><span className="run-batch-id" title={selectedId}>{selectedId?selectedId.slice(4,12):'尚无分析'}</span></div>;
+  return <><section className="run-controls" aria-label="分析批次与操作">
     <div className={'workspace-titlebar'+(view==='overview'?'':' run-utilitybar')}>
       {view==='overview'?<div><h1>安全运营态势总览</h1><p>多源告警关联、攻击阶段分析与证据追溯。</p></div>:<span className="run-workspace-label"><Icon name="layers"/>分析工作台</span>}
       <div className="run-title-actions">
@@ -99,7 +100,7 @@ export default function StageRunPanel({catalog,selectedId,view,onSelect,onRuns}:
         {view==='overview'&&<button className="run-refresh" aria-label="刷新工作台" onClick={()=>location.reload()}><Icon name="refresh"/></button>}
       </div>
     </div>
-    <div className="run-batch-toolbar"><label htmlFor="analysis-batch">当前分析批次</label><select id="analysis-batch" aria-label="历史分析" title={selectedLabel??selectedId} value={selectedId} onChange={e=>select(e.target.value)}><option value="" disabled>选择分析批次</option>{selectedId&&!selectedLabel&&<option value={selectedId}>{selectedId.slice(0,20)} · 正在识别</option>}{choices.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select><span className="run-batch-id" title={selectedId}>{selectedId?selectedId.slice(4,12):'尚无分析'}</span></div>
+    {(view!=='overview'||!children)&&batchControl}
     {historyError&&<Notice kind="error">任务状态暂不可读取：{historyError}</Notice>}
     {view==='records'&&<section className="panel run-history-table" aria-label="历史分析任务"><div className="section-heading"><h2>历史分析任务</h2><span className="muted">{runs.length} 次导入分析 · {baselineItems.length} 个既有快照</span></div><div className="table-scroll"><table><thead><tr><th>批次</th><th>文件名</th><th>告警数</th><th>分析时间</th><th>状态</th><th>操作</th></tr></thead><tbody>{runs.map(run=><tr key={run.run_id}><td><StableId value={run.run_id}/></td><td>{run.filename}</td><td>{run.input_count}</td><td><Time value={run.created_at}/></td><td>{statusNames[run.status]} · {run.result_available?'结果可用':run.unavailable_reason?'结果不可用':'结果未就绪'}</td><td><button className="text-button" onClick={()=>run.result_available?openResult(run.run_id):show(run.run_id)}>{run.result_available?'查看结果':'查看状态与日志'}</button>{run.result_available&&<button className="text-button" onClick={()=>show(run.run_id)}>运行详情</button>}</td></tr>)}</tbody></table></div>{!runs.length&&<Notice>尚无导入分析任务，既有快照可通过上方批次选择器打开。</Notice>}</section>}
     {open&&<ImportDrawer onClose={()=>setOpen(false)}><section className="run-upload-section" aria-label="告警导入与分析任务"><h3>选择原生告警文件</h3><p className="run-upload-hint">JSONL · UTF-8 · 最大 16 MiB。每行一条符合现有来源契约的原生告警。</p>
@@ -111,5 +112,5 @@ export default function StageRunPanel({catalog,selectedId,view,onSelect,onRuns}:
       </div>}
       <button className="primary run-start-button" disabled={!!busy||upload?.validation.status!=='VALID'} onClick={()=>void start()}>开始分析</button>
     </section>{current&&<RunDetails run={current} onResult={()=>openResult(current.run_id)}/>}</ImportDrawer>}
-  </section>;
+  </section>{children?.(batchControl)}</>;
 }

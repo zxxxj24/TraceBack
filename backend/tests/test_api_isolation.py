@@ -18,7 +18,7 @@ def test_two_disjoint_analyses_isolate_alert_incident_chain_edge_timeline_diagno
     client, _, root = api
     first = create_run(api, edge_records("a"), "a.json")
     store = SnapshotStore(root, first)
-    unchanged = {str(p.relative_to(root)): file_digest(p) for directory in (store.domain, store.details) for p in directory.iterdir()}
+    unchanged = {str(p.relative_to(root)): file_digest(p) for directory in (store.domain, store.details) for p in directory.rglob('*') if p.is_file()}
     second = create_run(api, edge_records("b"), "b.json")
     scope_a, scope_b = {"analysis_id": first}, {"analysis_id": second}
     inc_a = client.get("/api/v1/incidents", params=scope_a).json()["items"][0]
@@ -36,7 +36,7 @@ def test_two_disjoint_analyses_isolate_alert_incident_chain_edge_timeline_diagno
     timeline_a = client.get("/api/v1/incidents/"+inc_a["incident_id"]+"/timeline", params=scope_a).json()
     assert set(aid for row in timeline_a["items"] for aid in row["alert_ids"]) == set(inc_a["alert_ids"])
     assert SnapshotStore(root, second).details != store.details
-    assert unchanged == {str(p.relative_to(root)): file_digest(p) for directory in (store.domain, store.details) for p in directory.iterdir()}
+    assert unchanged == {str(p.relative_to(root)): file_digest(p) for directory in (store.domain, store.details) for p in directory.rglob('*') if p.is_file()}
     assert QueryService(root).analysis(first)["diagnostics_ref"] != QueryService(root).analysis(second)["diagnostics_ref"]
 
 
